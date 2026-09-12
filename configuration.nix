@@ -221,6 +221,7 @@
     ollama-cuda
     python314
     python314Packages.pip
+    vscode
   ];
 
   # ----------------------------------------------------------
