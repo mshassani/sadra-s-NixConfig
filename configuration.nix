@@ -164,7 +164,7 @@
 
   programs.dconf.enable = true;
 
-
+  virtualisation.docker.enable = true;
   # ----------------------------------------------------------
   # Login Manager
   # ----------------------------------------------------------
@@ -222,6 +222,7 @@
     python314
     python314Packages.pip
     vscode
+    docker
   ];
 
   # ----------------------------------------------------------
