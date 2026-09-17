@@ -4,7 +4,6 @@ with lib;
 
 let
   cfg = config.programs.protonRunner;
-
   protonPackage = pkgs.proton-ge-bin;
   proton = "${protonPackage.steamcompattool}/proton";
   steamRun = "${pkgs.steam-run}/bin/steam-run";
@@ -59,14 +58,29 @@ let
     (name: app:
       let
         launcher = pkgs.writeShellScriptBin "proton-${name}" ''
+          set -euo pipefail
+          exe=${escapeShellArg app.exe}
+          case "$exe" in
+            "~/"*) exe="$HOME/''${exe#~/}" ;;
+          esac
           exec ${protonRun}/bin/proton-run \
             ${escapeShellArg app.prefix} \
-            ${escapeShellArg app.exe}
+            "$exe" \
+            "$@"
+        '';
+
+        desktopFile = pkgs.writeText "proton-${name}.desktop" ''
+          [Desktop Entry]
+          Type=Application
+          Name=${escapeShellArg (if app.name != null then app.name else name)}
+          Comment=${escapeShellArg app.comment}
+          Exec=${launcher}/bin/proton-${name}
+          Terminal=false
+          Categories=${concatStringsSep ";" app.categories};
         '';
       in
       {
-        inherit name;
-        inherit app launcher;
+        inherit name desktopFile;
       }
     )
     cfg.apps;
@@ -121,15 +135,10 @@ in
 
     environment.systemPackages = [ protonRun ];
 
-    xdg.desktopEntries = listToAttrs (map (entry: {
-      name = "proton-${entry.name}";
+    environment.etc = listToAttrs (map (entry: {
+      name = "xdg/applications/proton-${entry.name}.desktop";
       value = {
-        name = if entry.app.name != null then entry.app.name else entry.name;
-        comment = entry.app.comment;
-        exec = "${entry.launcher}/bin/proton-${entry.name}";
-        terminal = false;
-        type = "Application";
-        categories = entry.app.categories;
+        source = entry.desktopFile;
       };
     }) appLaunchers);
   };
