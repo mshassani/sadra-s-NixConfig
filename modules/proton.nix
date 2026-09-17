@@ -6,6 +6,8 @@ let
   cfg = config.programs.protonRunner;
 
   protonPackage = pkgs.proton-ge-bin;
+  proton = "${protonPackage.steamcompattool}/proton";
+  steamRun = "${pkgs.steam-run}/bin/steam-run";
 
   protonRun = pkgs.writeShellScriptBin "proton-run" ''
     set -euo pipefail
@@ -35,15 +37,12 @@ let
         ;;
     esac
 
+    case "$exe" in
+      "~/"*) exe="$HOME/''${exe#~/}" ;;
+    esac
+
     if [ ! -f "$exe" ]; then
       echo "proton-run: executable not found: $exe" >&2
-      exit 1
-    fi
-
-    proton="$(find ${protonPackage}/share/steam/compatibilitytools.d -type f -name proton -print -quit)"
-
-    if [ -z "$proton" ]; then
-      echo "proton-run: Proton-GE executable not found in ${protonPackage}" >&2
       exit 1
     fi
 
@@ -53,7 +52,7 @@ let
     export STEAM_COMPAT_DATA_PATH="$prefix"
     export STEAM_COMPAT_CLIENT_INSTALL_PATH="${pkgs.steam}/share/steam"
 
-    exec "$proton" run "$exe" "$@"
+    exec ${steamRun} ${proton} run "$exe" "$@"
   '';
 
   appLaunchers = mapAttrsToList
@@ -82,13 +81,13 @@ in
         options = {
           exe = mkOption {
             type = types.str;
-            description = "Absolute or home-relative path to the Windows executable.";
+            description = "Path to the Windows executable. ~/ is expanded at runtime.";
             example = "~/Games/example/example.exe";
           };
 
           prefix = mkOption {
-            type = types.str;
-            description = "Name of the isolated Proton prefix under ~/.local/share/proton-prefixes/.";
+            type = types.strMatching "[A-Za-z0-9._-]+";
+            description = "Isolated Proton prefix name under ~/.local/share/proton-prefixes/.";
             example = "example";
           };
 
@@ -125,7 +124,7 @@ in
     xdg.desktopEntries = listToAttrs (map (entry: {
       name = "proton-${entry.name}";
       value = {
-        name = entry.app.name or entry.name;
+        name = if entry.app.name != null then entry.app.name else entry.name;
         comment = entry.app.comment;
         exec = "${entry.launcher}/bin/proton-${entry.name}";
         terminal = false;
