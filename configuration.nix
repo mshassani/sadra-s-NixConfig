@@ -3,6 +3,7 @@
 {
   imports = [
     /etc/nixos/hardware-configuration.nix
+    ./modules/proton.nix
   ];
 
   # ----------------------------------------------------------
@@ -71,7 +72,6 @@
     open = true;
   };
 
-  
   hardware.nvidia.prime = {
     intelBusId = "PCI:0@0:2:0";
     nvidiaBusId = "PCI:1@0:0:0";
@@ -94,25 +94,19 @@
   # Environment / Wayland / Dark Theme
   # ----------------------------------------------------------
   environment.sessionVariables = {
-
-    # Wayland
     NIXOS_OZONE_WL = "1";
     MOZ_ENABLE_WAYLAND = "1";
     ELECTRON_OZONE_PLATFORM_HINT = "auto";
 
-    # GTK
     GTK_THEME = "Adwaita:dark";
 
-    # Qt
     QT_QPA_PLATFORMTHEME = "gnome";
     QT_STYLE_OVERRIDE = "adwaita-dark";
 
-    # NVIDIA
     __GLX_VENDOR_LIBRARY_NAME = "nvidia";
     __GL_SHADER_DISK_CACHE_SKIP_CLEANUP = "1";
     __GL_SYNC_DISPLAY_DEVICE = "eDP-1";
 
-    # GSettings
     GSETTINGS_SCHEMA_DIR =
       "/run/current-system/sw/share/glib-2.0/schemas";
   };
@@ -157,14 +151,32 @@
   # ----------------------------------------------------------
   # Programs
   # ----------------------------------------------------------
-  programs.steam.enable = true;
-
   programs.throne.enable = true;
   programs.throne.tunMode.enable = true;
 
   programs.dconf.enable = true;
 
   virtualisation.docker.enable = true;
+
+  # ----------------------------------------------------------
+  # Proton-GE / Non-Steam Windows applications
+  # ----------------------------------------------------------
+  programs.protonRunner = {
+    enable = true;
+
+    # Add Windows applications here.
+    # Each application gets its own isolated Proton prefix and desktop launcher.
+    apps = {
+      # example = {
+      #   exe = "~/Games/example/example.exe";
+      #   prefix = "example";
+      #   name = "Example Windows App";
+      #   comment = "Example application running with Proton-GE";
+      #   categories = [ "Utility" ];
+      # };
+    };
+  };
+
   # ----------------------------------------------------------
   # Login Manager
   # ----------------------------------------------------------
@@ -244,9 +256,10 @@
     };
   };
 
-systemd.services.mpd.environment = {
-  XDG_RUNTIME_DIR = "/run/user/1000";
-};
+  systemd.services.mpd.environment = {
+    XDG_RUNTIME_DIR = "/run/user/1000";
+  };
+
   # ----------------------------------------------------------
   # Fonts
   # ----------------------------------------------------------
