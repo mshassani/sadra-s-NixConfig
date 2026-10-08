@@ -234,6 +234,8 @@
     python314
     python314Packages.pip
     vscode
+    ghdl
+    gtkwave
     docker
   ];
 
